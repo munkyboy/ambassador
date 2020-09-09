@@ -131,6 +131,8 @@ else
     envoy_flags+=( "--drain-time-s" "$drain_time" )
 fi
 
+watt_flags=()
+
 # AMBASSADOR_DEBUG is a list of things to enable debugging for,
 # separated by spaces; parse that in to an array.
 read -r -d '' -a ambassador_debug <<<"$AMBASSADOR_DEBUG"
@@ -152,6 +154,10 @@ for item in "${ambassador_debug[@]}"; do
             debug "AMBASSADOR_DEBUG: ENTRYPOINT_TRACE enabled"
             echo 2>&1
             set -x
+            ;;
+        watt)
+            debug 'AMBASSADOR_DEBUG: `watt --debug` enabled'
+            watt_flags+=('--debug')
             ;;
         *)
             debug "AMBASSADOR_DEBUG: unknown item: ${item@Q}"
@@ -442,7 +448,7 @@ if [[ -z "${AMBASSADOR_NO_KUBEWATCH}" ]]; then
         watt_query_flags+=(--namespace "${AMBASSADOR_NAMESPACE}")
     fi
 
-    launch "watt" watt \
+    launch "watt" watt "${watt_flags[@]}" \
            --listen-address="127.0.0.1:8002" \
            --notify 'python /ambassador/post_update.py --watt ' \
            --watch "python /ambassador/watch_hook.py" \
